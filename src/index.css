@@ -1,0 +1,159 @@
+@import 'maplibre-gl/dist/maplibre-gl.css';
+@import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* AWS-style base */
+@layer base {
+  body {
+    @apply bg-aws-gray-50 text-aws-gray-900 font-sans antialiased;
+  }
+}
+
+/* Custom scrollbar styles - Light theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F2F3F3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #AAB7B8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #879596;
+}
+
+/* Firefox scrollbar - Light theme */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #AAB7B8 #F2F3F3;
+}
+
+/* MapLibre GL overrides */
+.maplibregl-ctrl-group {
+  box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3), 1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  border-radius: 0.5rem;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: white;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: #F2F3F3;
+}
+
+.maplibregl-popup-content {
+  box-shadow: 0 4px 20px 1px rgba(0, 28, 36, 0.1);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Custom animations */
+@keyframes pulse-slow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* AWS Button styles */
+@layer components {
+  .btn-primary {
+    background-color: #FF9900;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+    box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3), 1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  }
+
+  .btn-primary:hover {
+    background-color: #ea8800;
+  }
+
+  .btn-secondary {
+    background-color: white;
+    color: #16191F;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #D5DBDB;
+    transition: background-color 0.2s;
+    box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3), 1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  }
+
+  .btn-secondary:hover {
+    background-color: #F2F3F3;
+  }
+
+  .btn-danger {
+    background-color: #dc2626;
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+    box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3), 1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+  }
+
+  .btn-danger:hover {
+    background-color: #b91c1c;
+  }
+
+  .card {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 1px 0 rgba(0, 28, 36, 0.3), 1px 1px 1px 0 rgba(0, 28, 36, 0.15), -1px 1px 1px 0 rgba(0, 28, 36, 0.15);
+    padding: 1.5rem;
+    border: 1px solid #EAEDED;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #D5DBDB;
+    border-radius: 0.5rem;
+  }
+
+  .input-field:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #146EB4;
+    border-color: transparent;
+  }
+}
