@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Info, ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Info, ChevronLeft, ChevronRight, AlertTriangle, RefreshCw, CalendarDays } from 'lucide-react';
 import { deviceApi } from '../../api/deviceApi';
 import { clsx } from 'clsx';
 
@@ -42,197 +42,258 @@ const getDistanceKm = (coords1, coords2) => {
   return d;
 };
 
-export default function DeviceDetailPanel({ device, onClose }) {
+export default function DeviceDetailPanel({ device, selectedDate, onSelectedDateChange, historyPoints, onHistoryPointsChange, onClose }) {
   const [activeTab, setActiveTab] = useState('tracking'); // 'tracking' | 'analytics' | 'details'
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState({});
+  const dateInputRef = useRef(null);
 
-  // Fetch history and parse real events
+  const changeDate = (days) => {
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + days);
+    onSelectedDateChange(next);
+  };
+
+  const formatSelectedDate = (date) => {
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatInputDate = (date) => {
+    const y = date.getFullYear();
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const d = date.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  // Reset date selection when active device changes
   useEffect(() => {
+    if (device?.sampleTime) {
+      const devDate = new Date(device.sampleTime);
+      const currentFormatted = formatInputDate(selectedDate);
+      const nextFormatted = formatInputDate(devDate);
+      if (currentFormatted !== nextFormatted) {
+        onSelectedDateChange(devDate);
+      }
+    } else {
+      const todayFormatted = formatInputDate(new Date());
+      const currentFormatted = formatInputDate(selectedDate);
+      if (currentFormatted !== todayFormatted) {
+        onSelectedDateChange(new Date());
+      }
+    }
+  }, [device?.deviceId, device?.sampleTime, onSelectedDateChange]);
+
+  // Fetch history from API and store in parent state
+  const fetchHistory = useCallback(() => {
     if (!device?.deviceId) return;
     setLoading(true);
-    deviceApi.getHistory(device.deviceId)
+
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(selectedDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    deviceApi.getHistory(device.deviceId, startOfDay.toISOString(), endOfDay.toISOString())
       .then(res => {
         // AWS history positions come sorted by sampleTime desc (newest first).
         // Sort oldest to newest for chronological aggregation
         const sortedHistory = [...(res.data || [])].sort(
           (a, b) => new Date(a.SampleTime) - new Date(b.SampleTime)
         );
+        onHistoryPointsChange(sortedHistory);
+      })
+      .catch(err => console.error('[History] Failed to load:', err))
+      .finally(() => setLoading(false));
+  }, [device?.deviceId, selectedDate, onHistoryPointsChange]);
 
-        // Group consecutive updates into "Driving" or "Stopped" segments
-        const segments = [];
-        let currentSegment = null;
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
-        for (let i = 0; i < sortedHistory.length - 1; i++) {
-          const pt = sortedHistory[i];
-          const nextPt = sortedHistory[i + 1];
+  // Parse chronological events when historyPoints update
+  useEffect(() => {
+    if (!device) return;
 
-          const distance = getDistanceKm(pt.Position, nextPt.Position);
-          const timeMs = Math.abs(new Date(nextPt.SampleTime) - new Date(pt.SampleTime));
-          
-          let type = 'stopped';
-          let speed = 0;
+    // Group consecutive updates into "Driving" or "Stopped" segments
+    const segments = [];
+    let currentSegment = null;
 
-          // If the gap between two pings is longer than 30 seconds, treat it as a stop gap
-          const isGap = timeMs > 30000;
+    for (let i = 0; i < historyPoints.length - 1; i++) {
+      const pt = historyPoints[i];
+      const nextPt = historyPoints[i + 1];
 
-          if (!isGap) {
-            const timeHrs = timeMs / 3600000;
-            speed = timeHrs > 0 ? (distance / timeHrs) : 0;
-            type = speed > 3 ? 'driving' : 'stopped';
-          } else {
-            type = 'stopped';
-          }
+      const distance = getDistanceKm(pt.Position, nextPt.Position);
+      const timeMs = Math.abs(new Date(nextPt.SampleTime) - new Date(pt.SampleTime));
+      
+      let type = 'stopped';
+      let speed = 0;
 
-          if (isGap) {
-            // Finalize current segment before gap
-            if (currentSegment) {
-              segments.push(currentSegment);
-              currentSegment = null;
-            }
-            // Add a dedicated stopped segment for the gap duration
-            segments.push({
-              type: 'stopped',
-              startTime: pt.SampleTime,
-              endTime: nextPt.SampleTime,
-              durationMs: timeMs,
-              distance: 0,
-              startPosition: pt.Position,
-              endPosition: pt.Position,
-              speeds: [0]
-            });
-          } else {
-            if (!currentSegment) {
-              currentSegment = {
-                type,
-                startTime: pt.SampleTime,
-                endTime: nextPt.SampleTime,
-                durationMs: timeMs,
-                distance: distance,
-                startPosition: pt.Position,
-                endPosition: nextPt.Position,
-                speeds: [speed]
-              };
-            } else if (currentSegment.type === type) {
-              // Merge same state into current segment
-              currentSegment.endTime = nextPt.SampleTime;
-              currentSegment.durationMs += timeMs;
-              currentSegment.distance += distance;
-              currentSegment.endPosition = nextPt.Position;
-              currentSegment.speeds.push(speed);
-            } else {
-              // State changed: finalize old segment and start new one
-              segments.push(currentSegment);
-              currentSegment = {
-                type,
-                startTime: pt.SampleTime,
-                endTime: nextPt.SampleTime,
-                durationMs: timeMs,
-                distance: distance,
-                startPosition: pt.Position,
-                endPosition: nextPt.Position,
-                speeds: [speed]
-              };
-            }
-          }
-        }
+      // If the gap between two pings is longer than 30 seconds, treat it as a stop gap
+      const isGap = timeMs > 30000;
 
-        // Push last segment
+      if (!isGap) {
+        const timeHrs = timeMs / 3600000;
+        speed = timeHrs > 0 ? (distance / timeHrs) : 0;
+        type = speed > 3 ? 'driving' : 'stopped';
+      } else {
+        type = 'stopped';
+      }
+
+      if (isGap) {
+        // Finalize current segment before gap
         if (currentSegment) {
           segments.push(currentSegment);
+          currentSegment = null;
         }
-
-        // Map segments to timeline event items (newest first)
-        const parsedEvents = segments.reverse().map((seg, idx) => {
-          let durationMs = seg.durationMs;
-
-          // If the latest event is 'stopped', add elapsed time from the last ping to now
-          if (idx === 0 && seg.type === 'stopped') {
-            const timeSinceLastPingMs = new Date() - new Date(seg.endTime);
-            if (timeSinceLastPingMs > 0) {
-              durationMs += timeSinceLastPingMs;
-            }
-          }
-
-          const durationMin = Math.round(durationMs / 60000);
-          
-          // Calculate average speed for driving segment
-          const avgSpeed = seg.type === 'driving' 
-            ? seg.speeds.reduce((a, b) => a + b, 0) / seg.speeds.length
-            : 0;
-
-          return {
-            type: seg.type,
-            time: seg.endTime 
-              ? new Date(seg.endTime).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-              : '12:00',
-            startTime: seg.startTime,
-            endTime: seg.endTime,
-            rawTime: seg.endTime,
-            speed: seg.type === 'driving' ? `${Math.min(Math.round(avgSpeed), 100)} km/h` : null,
-            duration: durationMin > 0 ? `${durationMin} min` : null,
-            rawDurationMin: durationMin,
-            distance: seg.type === 'driving' && seg.distance > 0.05 ? `${seg.distance.toFixed(1)} km` : null,
-            position: seg.endPosition // Use final position of the segment
-          };
+        // Add a dedicated stopped segment for the gap duration
+        const gapMin = Math.round(timeMs / 60000);
+        segments.push({
+          type: 'stopped',
+          startTime: pt.SampleTime,
+          endTime: nextPt.SampleTime,
+          durationMs: timeMs,
+          distance: 0,
+          startPosition: pt.Position,
+          endPosition: pt.Position,
+          speeds: [0],
+          duration: gapMin > 0 ? `${gapMin} min` : null,
+          rawDurationMin: gapMin,
+          position: pt.Position
         });
-
-        // Fallback if history is empty but device is currently active
-        if (parsedEvents.length === 0 && device.position) {
-          // Calculate elapsed stopped duration from last sample time to now
-          let durationMs = 600000; // 10 minutes default
-          if (device.sampleTime) {
-            const diffMs = new Date() - new Date(device.sampleTime);
-            if (diffMs > 0) durationMs = diffMs;
-          }
-          const durationMin = Math.round(durationMs / 60000);
-
-          parsedEvents.push({
-            type: 'stopped',
-            time: device.sampleTime 
-              ? new Date(device.sampleTime).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-              : 'Just now',
-            startTime: device.sampleTime ? new Date(device.sampleTime).getTime() - 600000 : new Date().getTime() - 600000,
-            endTime: device.sampleTime ? new Date(device.sampleTime) : new Date(),
-            rawTime: device.sampleTime,
-            speed: null,
-            duration: durationMin > 0 ? `${durationMin} min` : null,
-            rawDurationMin: durationMin,
-            distance: null,
-            position: device.position
-          });
+      } else {
+        if (!currentSegment) {
+          currentSegment = {
+            type,
+            startTime: pt.SampleTime,
+            endTime: nextPt.SampleTime,
+            durationMs: timeMs,
+            distance: distance,
+            startPosition: pt.Position,
+            endPosition: nextPt.Position,
+            speeds: [speed]
+          };
+        } else if (currentSegment.type === type) {
+          // Merge same state into current segment
+          currentSegment.endTime = nextPt.SampleTime;
+          currentSegment.durationMs += timeMs;
+          currentSegment.distance += distance;
+          currentSegment.endPosition = nextPt.Position;
+          currentSegment.speeds.push(speed);
+        } else {
+          // State changed: finalize old segment and start new one
+          segments.push(currentSegment);
+          currentSegment = {
+            type,
+            startTime: pt.SampleTime,
+            endTime: nextPt.SampleTime,
+            durationMs: timeMs,
+            distance: distance,
+            startPosition: pt.Position,
+            endPosition: nextPt.Position,
+            speeds: [speed]
+          };
         }
+      }
+    }
 
-        // Cap to show top 5 timeline items
-        setEvents(parsedEvents.slice(0, 5));
-      })
-      .catch(err => console.error('Failed to load detail panel history:', err))
-      .finally(() => setLoading(false));
-  }, [device]);
+    // Push last segment
+    if (currentSegment) {
+      segments.push(currentSegment);
+    }
+
+    // Map segments to timeline event cards (newest first)
+    const parsedEvents = segments.reverse().map((seg, idx) => {
+      if (seg.type === 'stopped' && seg.duration) {
+        // Already created gap segment
+        return seg;
+      }
+
+      let durationMs = seg.durationMs;
+
+      // If the latest event is 'stopped', add elapsed time from the last ping to now
+      if (idx === 0 && seg.type === 'stopped') {
+        const timeSinceLastPingMs = new Date() - new Date(seg.endTime);
+        if (timeSinceLastPingMs > 0) {
+          durationMs += timeSinceLastPingMs;
+        }
+      }
+
+      const durationMin = Math.round(durationMs / 60000);
+      
+      // Calculate average speed for driving segment
+      const avgSpeed = seg.type === 'driving' 
+        ? seg.speeds.reduce((a, b) => a + b, 0) / seg.speeds.length
+        : 0;
+
+      return {
+        type: seg.type,
+        time: seg.endTime 
+          ? new Date(seg.endTime).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+          : '12:00',
+        startTime: seg.startTime,
+        endTime: seg.endTime,
+        rawTime: seg.endTime,
+        speed: seg.type === 'driving' ? `${Math.min(Math.round(avgSpeed), 100)} km/h` : null,
+        duration: durationMin > 0 ? `${durationMin} min` : null,
+        rawDurationMin: durationMin,
+        distance: seg.type === 'driving' && seg.distance > 0.05 ? `${seg.distance.toFixed(1)} km` : null,
+        position: seg.endPosition // Use final position of the segment
+      };
+    });
+
+    // Fallback if history is empty but device is currently active
+    if (parsedEvents.length === 0 && device.position) {
+      let durationMs = 600000; // 10 minutes default
+      if (device.sampleTime) {
+        const diffMs = new Date() - new Date(device.sampleTime);
+        if (diffMs > 0) durationMs = diffMs;
+      }
+      const durationMin = Math.round(durationMs / 60000);
+
+      parsedEvents.push({
+        type: 'stopped',
+        time: device.sampleTime 
+          ? new Date(device.sampleTime).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+          : 'Just now',
+        startTime: device.sampleTime ? new Date(device.sampleTime).getTime() - 600000 : new Date().getTime() - 600000,
+        endTime: device.sampleTime ? new Date(device.sampleTime) : new Date(),
+        rawTime: device.sampleTime,
+        speed: null,
+        duration: durationMin > 0 ? `${durationMin} min` : null,
+        rawDurationMin: durationMin,
+        distance: null,
+        position: device.position
+      });
+    }
+
+    setEvents(parsedEvents.slice(0, 5));
+  }, [device, historyPoints]);
 
   // Translate coordinates to address
-  const fetchAddress = async (lat, lon, key) => {
-    if (addresses[key]) return;
+  const fetchAddress = useCallback(async (lat, lon, key) => {
     try {
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=16`);
       const data = await res.json();
       if (data.display_name) {
         setAddresses(prev => ({ ...prev, [key]: data.display_name }));
       }
-    } catch (e) {
+    } catch {
       setAddresses(prev => ({ ...prev, [key]: `${lat.toFixed(4)}, ${lon.toFixed(4)}` }));
     }
-  };
+  }, []);
 
   useEffect(() => {
     events.forEach(eventItem => {
       if (eventItem.position) {
         const key = `${eventItem.position[1]},${eventItem.position[0]}`;
-        fetchAddress(eventItem.position[1], eventItem.position[0], key);
+        if (!addresses[key]) {
+          fetchAddress(eventItem.position[1], eventItem.position[0], key);
+        }
       }
     });
-  }, [events]);
+  }, [events, fetchAddress, addresses]);
 
   if (!device) return null;
 
@@ -297,10 +358,6 @@ export default function DeviceDetailPanel({ device, onClose }) {
     };
   });
 
-  // Last update header date
-  const lastUpdateDate = device.sampleTime 
-    ? new Date(device.sampleTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    : 'null';
 
   return (
     <div className="absolute top-4 right-4 bottom-4 w-96 bg-white/95 backdrop-blur-md rounded-3xl shadow-[0_20px_50px_rgba(15,23,42,0.12)] border border-slate-200/80 z-20 flex flex-col overflow-hidden select-none animate-in slide-in-from-right duration-300">
@@ -392,11 +449,51 @@ export default function DeviceDetailPanel({ device, onClose }) {
             
             {/* Last Update Header */}
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800">Last Update</span>
-              <div className="flex items-center space-x-2 text-xs text-slate-500 font-semibold bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1">
-                <ChevronLeft className="w-3.5 h-3.5 cursor-pointer text-slate-400 hover:text-slate-600" />
-                <span>{lastUpdateDate}</span>
-                <ChevronRight className="w-3.5 h-3.5 cursor-pointer text-slate-400 hover:text-slate-600" />
+              <div className="flex items-center space-x-1.5">
+                <span className="text-xs font-bold text-slate-800">Last Update</span>
+                <button
+                  onClick={fetchHistory}
+                  disabled={loading}
+                  className="p-1 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all active:scale-95 disabled:opacity-50"
+                  title="Sync latest history"
+                >
+                  <RefreshCw className={clsx("w-3.5 h-3.5", loading && "animate-spin")} />
+                </button>
+              </div>
+              <div className="flex items-center space-x-1 text-xs text-slate-500 font-semibold">
+                <button
+                  onClick={() => changeDate(-1)}
+                  className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition-all active:scale-95"
+                  title="Ngày trước"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => dateInputRef.current?.showPicker?.() || dateInputRef.current?.click()}
+                  className="flex items-center space-x-1.5 bg-slate-50 border border-slate-200/60 rounded-lg px-2.5 py-1.5 hover:border-indigo-300 hover:bg-indigo-50/50 transition-all cursor-pointer group"
+                  title="Chọn ngày"
+                >
+                  <CalendarDays className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-500 transition-colors" />
+                  <span className="group-hover:text-indigo-600 transition-colors">{formatSelectedDate(selectedDate)}</span>
+                </button>
+                <input
+                  ref={dateInputRef}
+                  type="date"
+                  value={formatInputDate(selectedDate)}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      onSelectedDateChange(new Date(e.target.value + 'T00:00:00'));
+                    }
+                  }}
+                  className="absolute opacity-0 pointer-events-none w-0 h-0"
+                />
+                <button
+                  onClick={() => changeDate(1)}
+                  className="p-1 hover:bg-slate-100 rounded-md text-slate-400 hover:text-slate-600 transition-all active:scale-95"
+                  title="Ngày sau"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
 

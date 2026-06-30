@@ -25,6 +25,13 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
   const [activeView, setActiveView] = useState('dashboard');
   const [selectedDevice, setSelectedDevice] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [historyPoints, setHistoryPoints] = useState([]);
+
+  const selectedDeviceRef = useRef(selectedDevice);
+  useEffect(() => {
+    selectedDeviceRef.current = selectedDevice;
+  }, [selectedDevice]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openedPanel, setOpenedPanel] = useState(null);
@@ -153,7 +160,38 @@ function App() {
 
     socket.on('realtime-event', (event) => {
       console.log('📦 Received realtime event:', event);
-      applyRealtimeEvent(event);
+      const processed = applyRealtimeEvent(event);
+      
+      const currentSelected = selectedDeviceRef.current;
+      if (processed && currentSelected && event.deviceId === currentSelected.deviceId) {
+        const payload = event.payload || {};
+        setSelectedDevice(prev => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            position: payload.position || prev.position,
+            sampleTime: payload.sampleTime || prev.sampleTime,
+            isOnline: payload.isOnline ?? prev.isOnline,
+            positionProperties: payload.positionProperties || prev.positionProperties,
+          };
+        });
+
+        if (payload.position && payload.sampleTime) {
+          setHistoryPoints(prev => {
+            const newPoint = { Position: payload.position, SampleTime: payload.sampleTime };
+            if (prev.length === 0) {
+              return [newPoint];
+            }
+            const lastPoint = prev[prev.length - 1];
+            const liveTime = new Date(newPoint.SampleTime).getTime();
+            const lastTime = new Date(lastPoint.SampleTime).getTime();
+            if (liveTime > lastTime) {
+              return [...prev, newPoint];
+            }
+            return prev;
+          });
+        }
+      }
       
       // Hiển thị thông báo Toast nếu là cảnh báo geofence hoặc chống trộm
       if (event.type === 'geofence.enter' || event.type === 'geofence.exit' || event.type === 'antitheft.breach') {
@@ -369,11 +407,11 @@ function App() {
                 />
 
                 {/* Device Path History Layer */}
-                <DeviceHistoryPathLayer
-                  deviceId={selectedDevice?.deviceId}
-                  liveDevice={devices.find(d => d.deviceId === selectedDevice?.deviceId) || selectedDevice}
-                  isVisible={!!selectedDevice}
-                />
+                 <DeviceHistoryPathLayer
+                   deviceId={selectedDevice?.deviceId}
+                   isVisible={!!selectedDevice}
+                   history={historyPoints}
+                 />
 
                 {/* Devices Overlay Panel (Locate Button) */}
                 <DevicesMapOverlay
@@ -388,12 +426,19 @@ function App() {
               </Map>
 
               {/* Floating selected device detail sidebar */}
-              {selectedDevice && (
-                <DeviceDetailPanel
-                  device={selectedDevice}
-                  onClose={() => setSelectedDevice(null)}
-                />
-              )}
+               {selectedDevice && (
+                 <DeviceDetailPanel
+                   device={selectedDevice}
+                   selectedDate={selectedDate}
+                   onSelectedDateChange={setSelectedDate}
+                   historyPoints={historyPoints}
+                   onHistoryPointsChange={setHistoryPoints}
+                   onClose={() => {
+                     setSelectedDevice(null);
+                     setHistoryPoints([]);
+                   }}
+                 />
+               )}
             </div>
           )}
 

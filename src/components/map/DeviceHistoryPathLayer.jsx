@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react';
 import { Source, Layer } from 'react-map-gl/maplibre';
-import { deviceApi } from '../../api/deviceApi';
 
 const historyLineLayer = {
     id: 'device-history-line',
@@ -23,71 +21,64 @@ const historyPointsLayer = {
     },
 };
 
-export default function DeviceHistoryPathLayer({ deviceId, liveDevice, isVisible }) {
-    const [history, setHistory] = useState([]);
+const getDistanceKm = (coords1, coords2) => {
+    if (!coords1 || !coords2) return 0;
+    const [lon1, lat1] = coords1;
+    const [lon2, lat2] = coords2;
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+};
 
-    useEffect(() => {
-        let active = true;
-        if (deviceId && isVisible) {
-            deviceApi.getHistory(deviceId)
-                .then(res => {
-                    if (active) {
-                        // AWS history positions come sorted by sampleTime desc (newest first).
-                        // Or rather we should sort just in case
-                        const sorted = [...(res.data || [])].sort(
-                            (a, b) => new Date(a.SampleTime) - new Date(b.SampleTime)
-                        );
-                        console.log(`[History] Loaded ${sorted.length} points for ${deviceId}`);
-                        setHistory(sorted);
-                    }
-                })
-                .catch(err => console.error('Failed to fetch history:', err));
-        } else {
-            setHistory([]);
-        }
-        return () => { active = false; };
-    }, [deviceId, isVisible]);
-
-    // Lắng nghe vị trí real-time và nối tiếp vào lịch sử đang có
-    useEffect(() => {
-        if (!liveDevice || !liveDevice.position || !liveDevice.sampleTime) return;
-
-        setHistory(prev => {
-            const newPoint = { Position: liveDevice.position, SampleTime: liveDevice.sampleTime };
-
-            if (prev.length === 0) {
-                return [newPoint];
-            }
-
-            const lastPoint = prev[prev.length - 1];
-            const liveTime = new Date(liveDevice.sampleTime).getTime();
-            const lastTime = new Date(lastPoint.SampleTime).getTime();
-
-            // Chỉ thêm nếu toạ độ này thực sự mới hơn điểm cuối cùng
-            if (liveTime > lastTime) {
-                console.log(`[History] Real-time point added for ${liveDevice.deviceId}`);
-                return [...prev, newPoint];
-            }
-
-            return prev;
-        });
-    }, [liveDevice]);
-
+export default function DeviceHistoryPathLayer({ deviceId, isVisible, history }) {
     // We need at least 1 point to draw anything
     if (!history || history.length === 0 || !isVisible) {
-        if (isVisible) console.log(`[History] No points to display for ${deviceId}`);
         return null;
     }
 
-    // AWS Position is [longitude, latitude]
-    const coordinates = history.map(pos => pos.Position);
+    // Group history points into separate line segments to prevent massive jumps/teleportation lines
+    const lineSegments = [];
+    let currentSegment = [];
+
+    for (let i = 0; i < history.length; i++) {
+        const pt = history[i];
+        if (currentSegment.length === 0) {
+            currentSegment.push(pt.Position);
+        } else {
+            const lastPt = history[i - 1];
+            const timeMs = Math.abs(new Date(pt.SampleTime) - new Date(lastPt.SampleTime));
+            const dist = getDistanceKm(pt.Position, lastPt.Position);
+
+            // Split line if gap is > 10 minutes or distance jump is > 10 km (teleportation/GPS drift)
+            const isTimeGap = timeMs > 10 * 60 * 1000;
+            const isTeleport = dist > 10 && timeMs < 5 * 60 * 1000;
+
+            if (isTimeGap || isTeleport) {
+                if (currentSegment.length >= 2) {
+                    lineSegments.push(currentSegment);
+                }
+                currentSegment = [pt.Position];
+            } else {
+                currentSegment.push(pt.Position);
+            }
+        }
+    }
+    if (currentSegment.length >= 2) {
+        lineSegments.push(currentSegment);
+    }
 
     const geojsonLine = {
         type: 'Feature',
         properties: {},
         geometry: {
-            type: 'LineString',
-            coordinates,
+            type: 'MultiLineString',
+            coordinates: lineSegments,
         },
     };
 
@@ -102,7 +93,7 @@ export default function DeviceHistoryPathLayer({ deviceId, liveDevice, isVisible
 
     return (
         <>
-            {coordinates.length >= 2 && (
+            {lineSegments.length > 0 && (
                 <Source id={`history-line-source-${deviceId}`} type="geojson" data={geojsonLine}>
                     <Layer {...historyLineLayer} id={`history-line-layer-${deviceId}`} />
                 </Source>
