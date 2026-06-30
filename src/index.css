@@ -93,7 +93,7 @@
 /* AWS Button styles */
 @layer components {
   .btn-primary {
-    background-color: #FF9900;
+    background-color: #4F46E5;
     color: white;
     font-weight: 500;
     padding: 0.5rem 1rem;
@@ -103,7 +103,7 @@
   }
 
   .btn-primary:hover {
-    background-color: #ea8800;
+    background-color: #4338CA;
   }
 
   .btn-secondary {

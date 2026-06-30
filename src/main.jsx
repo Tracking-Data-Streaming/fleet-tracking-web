@@ -7,7 +7,6 @@ import App from './App.jsx'
 import { Amplify } from 'aws-amplify';
 import { COGNITO } from './configuration';
 
-// Khởi tạo thiết lập AWS Amplify cho hệ thống
 Amplify.configure({
   Auth: {
     Cognito: {

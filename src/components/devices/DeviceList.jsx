@@ -117,8 +117,8 @@ function AddressResolver({ position }) {
   }, [position[1], position[0]]);
 
   return (
-    <div className="flex items-start space-x-1.5 text-xs text-aws-gray-700">
-      <MapPin className="w-3.5 h-3.5 text-aws-orange mt-0.5 flex-shrink-0" />
+    <div className="flex items-start space-x-1.5 text-xs text-slate-600">
+      <MapPin className="w-3.5 h-3.5 text-indigo-600 mt-0.5 flex-shrink-0" />
       <span className="font-medium leading-tight" title={address || "Translating..."}>
         {loading ? <span className="text-aws-gray-400 italic">Translating position...</span> : address}
       </span>
@@ -218,8 +218,8 @@ export default function DeviceList({
       {/* ── Header toolbar ── */}
       <div className="flex flex-wrap items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-aws-gray-900 flex items-center space-x-2">
-            <Navigation2 className="w-5 h-5 text-aws-orange" />
+          <h2 className="text-lg font-semibold text-slate-800 flex items-center space-x-2">
+            <Navigation2 className="w-5 h-5 text-indigo-650" />
             <span>Device Management</span>
           </h2>
           <p className="text-sm text-aws-gray-500 mt-0.5 sm:ml-7">
@@ -237,7 +237,7 @@ export default function DeviceList({
           </button>
           <button
             onClick={() => openCreate()}
-            className="flex items-center space-x-2 px-4 py-2 bg-aws-orange text-white rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium shadow-sm"
+            className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium shadow-sm"
           >
             <Plus className="w-4 h-4" />
             <span>Add Device</span>
@@ -260,13 +260,13 @@ export default function DeviceList({
             placeholder="Search by ID or name..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-aws-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-aws-orange transition"
+            className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
           />
         </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2 border border-aws-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-aws-orange transition"
+          className="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
         >
           <option value="all">All statuses</option>
           <option value="active">Active</option>
@@ -294,18 +294,18 @@ export default function DeviceList({
           )}
         </div>
       ) : (
-        <div className="bg-white border border-aws-gray-200 rounded-xl shadow-sm overflow-hidden overflow-x-auto">
+        <div className="bg-white border border-slate-100/80 rounded-3xl shadow-[0_15px_40px_rgba(15,23,42,0.04)] overflow-hidden overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-aws-gray-50 text-aws-gray-600 text-xs uppercase tracking-wider font-semibold border-b border-aws-gray-200">
-                <th className="py-3 px-4">Device</th>
-                <th className="py-3 px-4">Status & Network</th>
-                <th className="py-3 px-4">Last Position</th>
-                <th className="py-3 px-4">Anti-Theft Shield</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="bg-slate-50/70 text-slate-400 text-[10px] uppercase tracking-wider font-extrabold border-b border-slate-100">
+                <th className="py-4 px-6">Device</th>
+                <th className="py-4 px-6">Status & Network</th>
+                <th className="py-4 px-6">Last Position</th>
+                <th className="py-4 px-6">Anti-Theft Shield</th>
+                <th className="py-4 px-6 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-aws-gray-100">
+            <tbody className="divide-y divide-slate-100/60">
               {filtered.map((device) => {
                 const online = getOnlineStatus(device);
                 const typeConf = TYPE_CONFIG[device.type] || TYPE_CONFIG.other;
@@ -318,42 +318,42 @@ export default function DeviceList({
                   <tr
                     key={device.deviceId}
                     className={clsx(
-                      "group hover:bg-aws-gray-50 transition-colors border-l-2",
-                      isSelected ? "border-aws-orange bg-aws-gray-50/50" : "border-transparent"
+                      "group hover:bg-slate-50/50 transition-all border-l-[3px] border-b border-slate-100/60",
+                      isSelected ? "border-indigo-650 bg-indigo-50/10" : "border-transparent"
                     )}
                   >
 
                     {/* Column: Device Name/ID */}
-                    <td className="py-3 px-4 whitespace-nowrap cursor-pointer" onClick={() => onDeviceSelect(device)}>
+                    <td className="py-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => onDeviceSelect(device)}>
                       <div className="flex items-center space-x-3">
-                        <div className={clsx('p-2 rounded-lg', typeConf.color)}>
+                        <div className={clsx('p-2.5 rounded-xl', typeConf.color)}>
                           <TypeIcon className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="font-semibold text-aws-gray-900 text-sm leading-tight">
+                          <p className="font-bold text-slate-800 text-sm leading-tight">
                             {device.displayName || device.deviceId}
                           </p>
-                          <p className="text-xs text-aws-gray-500 font-mono mt-0.5">{device.deviceId}</p>
+                          <p className="text-[10px] text-slate-400 font-mono mt-0.5">{device.deviceId}</p>
                         </div>
                       </div>
                     </td>
 
                     {/* Column: Status & Connectivity */}
-                    <td className="py-3 px-4 whitespace-nowrap cursor-pointer" onClick={() => onDeviceSelect(device)}>
+                    <td className="py-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => onDeviceSelect(device)}>
                       <div className="flex flex-col space-y-1.5 items-start">
-                        <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border font-bold', statusConf.color)}>
+                        <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-md text-[10px] uppercase tracking-wide border font-bold', statusConf.color)}>
                           {statusConf.label}
                         </span>
                         <div className="flex items-center space-x-1.5">
                           {online.color === 'green'
                             ? <Wifi className="w-3.5 h-3.5 text-green-500" />
-                            : <WifiOff className="w-3.5 h-3.5 text-aws-gray-400" />}
+                            : <WifiOff className="w-3.5 h-3.5 text-slate-400" />}
                           <span className={clsx(
-                            "text-xs font-medium",
+                            "text-xs font-semibold",
                             online.color === 'green' && 'text-green-600',
                             online.color === 'yellow' && 'text-yellow-600',
                             online.color === 'red' && 'text-red-500',
-                            online.color === 'gray' && 'text-aws-gray-500',
+                            online.color === 'gray' && 'text-slate-400',
                           )}>
                             {online.text}
                           </span>
@@ -362,18 +362,18 @@ export default function DeviceList({
                     </td>
 
                     {/* Column: Location */}
-                    <td className="py-3 px-4 min-w-[200px] max-w-[250px] cursor-pointer" onClick={() => onDeviceSelect(device)}>
+                    <td className="py-4 px-6 min-w-[200px] max-w-[250px] cursor-pointer" onClick={() => onDeviceSelect(device)}>
                       {device.position ? (
                         <div className="flex flex-col">
                           <AddressResolver position={device.position} />
                           {device.sampleTime && (
-                            <div className="text-[10px] text-aws-gray-400 mt-1 ml-5">
+                            <div className="text-[10px] text-slate-400 mt-1 ml-5 font-semibold">
                               Last seen: {new Date(device.sampleTime).toLocaleTimeString('en-US', { hour12: false })}
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-1.5 text-aws-gray-400 text-xs italic">
+                        <div className="flex items-center space-x-1.5 text-slate-400 text-xs italic font-medium">
                           <MapPin className="w-3 h-3" />
                           <span>No position data</span>
                         </div>
@@ -381,14 +381,14 @@ export default function DeviceList({
                     </td>
 
                     {/* Column: Protection */}
-                    <td className="py-3 px-4 whitespace-nowrap cursor-pointer" onClick={() => onDeviceSelect(device)}>
+                    <td className="py-4 px-6 whitespace-nowrap cursor-pointer" onClick={() => onDeviceSelect(device)}>
                       {antitheftOn ? (
-                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs border border-red-300 bg-red-50 text-red-700 font-medium">
+                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-[10px] border border-red-200 bg-red-50 text-red-650 font-bold">
                           <ShieldAlert className="w-3.5 h-3.5 animate-pulse" />
                           <span>Shield Active</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs bg-aws-gray-100 text-aws-gray-500">
+                        <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-xl text-[10px] bg-slate-100 text-slate-400 font-bold">
                           <Shield className="w-3.5 h-3.5" />
                           <span>Disabled</span>
                         </span>
@@ -396,15 +396,15 @@ export default function DeviceList({
                     </td>
 
                     {/* Column: Actions */}
-                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end space-x-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); initiateAntitheftToggle(device); }}
                           className={clsx(
-                            'p-2 rounded-lg transition-all',
+                            'p-2 rounded-xl transition-all',
                             antitheftOn
                               ? 'text-red-500 hover:text-red-700 hover:bg-red-50'
-                              : 'text-aws-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                              : 'text-slate-450 hover:text-blue-600 hover:bg-blue-50/70'
                           )}
                           title={antitheftOn ? 'Disable Shield' : 'Enable Shield'}
                         >
@@ -413,7 +413,7 @@ export default function DeviceList({
 
                         <button
                           onClick={(e) => { e.stopPropagation(); setFormModal({ open: true, device }); }}
-                          className="p-2 text-aws-gray-400 hover:text-aws-gray-800 hover:bg-aws-gray-200 rounded-lg transition-all"
+                          className="p-2 text-slate-450 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all"
                           title="Edit"
                         >
                           <Pencil className="w-4 h-4" />
@@ -421,7 +421,7 @@ export default function DeviceList({
 
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteModal({ open: true, deviceId: device.deviceId }); }}
-                          className="p-2 text-aws-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                          className="p-2 text-slate-450 hover:text-red-650 hover:bg-red-50 rounded-xl transition-all"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

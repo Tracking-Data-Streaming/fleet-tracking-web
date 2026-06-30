@@ -388,23 +388,23 @@ const GeofencesLayer = ({
 
       {/* ── Polygon drawing UI ── */}
       {isDrawing && !drawnPolygon && (
-        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white rounded-lg shadow-aws-lg border border-aws-gray-200 p-4 z-50">
+        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(15,23,42,0.1)] border border-slate-200/80 p-4 z-50">
           <div className="flex items-start justify-between mb-3">
-            <h3 className="font-semibold text-aws-gray-900">Draw Polygon Geofence</h3>
-            <button onClick={handleCancelPolygonDrawing} className="text-aws-gray-500 hover:text-aws-gray-700">
+            <h3 className="font-bold text-slate-800 text-sm">Draw Polygon Geofence</h3>
+            <button onClick={handleCancelPolygonDrawing} className="text-slate-400 hover:text-slate-600">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="text-sm text-aws-gray-700 space-y-2">
+          <div className="text-xs text-slate-600 space-y-2 font-medium">
             {isGeofenceCompletable ? (
               <>
-                <p className="font-medium text-aws-orange">Almost done!</p>
-                <p>Click the <strong>first point</strong> (orange dot) to close the shape.</p>
+                <p className="font-semibold text-indigo-605">Almost done!</p>
+                <p>Click the <strong>first point</strong> (indigo dot) to close the shape.</p>
               </>
             ) : (
               <>
-                <p className="font-medium">How to draw:</p>
-                <ol className="list-decimal list-inside space-y-1 text-xs">
+                <p className="font-semibold text-slate-700">How to draw:</p>
+                <ol className="list-decimal list-inside space-y-1">
                   <li>Click on the map to add points</li>
                   <li>Add at least 3 points</li>
                   <li>Click the first point to close the shape</li>
@@ -413,7 +413,7 @@ const GeofencesLayer = ({
               </>
             )}
           </div>
-          <button onClick={handleCancelPolygonDrawing} className="mt-4 w-full btn-secondary text-sm">
+          <button onClick={handleCancelPolygonDrawing} className="mt-4 w-full btn-secondary text-xs font-bold py-2 rounded-xl">
             Cancel
           </button>
         </div>
@@ -421,22 +421,22 @@ const GeofencesLayer = ({
 
       {/* Polygon ready to save */}
       {drawnPolygon && !isAddingGeofence && (
-        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white rounded-lg shadow-aws-lg border border-aws-gray-200 p-4 z-50">
+        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(15,23,42,0.1)] border border-slate-200/80 p-4 z-50">
           <div className="flex items-start justify-between mb-3">
-            <h3 className="font-semibold text-aws-gray-900">Polygon Geofence Ready</h3>
-            <button onClick={handleCancelPolygonDrawing} className="text-aws-gray-500 hover:text-aws-gray-700">
+            <h3 className="font-bold text-slate-800 text-sm">Polygon Geofence Ready</h3>
+            <button onClick={handleCancelPolygonDrawing} className="text-slate-400 hover:text-slate-600">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-sm text-green-600 font-medium mb-1">✓ Polygon drawn successfully!</p>
-          <p className="text-xs text-aws-gray-600 mb-4">
+          <p className="text-xs text-green-650 font-bold mb-1">✓ Polygon drawn successfully!</p>
+          <p className="text-[11px] text-slate-500 font-medium mb-4">
             Click "Save" to submit to AWS or "Discard" to start over.
           </p>
           <div className="space-y-2">
-            <button onClick={handleSavePolygonGeofence} className="w-full btn-primary flex items-center justify-center space-x-2">
+            <button onClick={handleSavePolygonGeofence} className="w-full btn-primary flex items-center justify-center space-x-2 py-2 rounded-xl text-xs font-bold">
               <span>Save Geofence</span>
             </button>
-            <button onClick={handleCancelPolygonDrawing} className="w-full btn-secondary text-sm">
+            <button onClick={handleCancelPolygonDrawing} className="w-full btn-secondary text-xs font-bold py-2 rounded-xl">
               Discard
             </button>
           </div>
@@ -445,10 +445,10 @@ const GeofencesLayer = ({
 
       {/* Polygon saving spinner */}
       {isAddingGeofence && (
-        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white rounded-lg shadow-aws-lg border border-aws-gray-200 p-4 z-50">
-          <h3 className="font-semibold text-aws-gray-900 mb-3">Saving Geofence...</h3>
-          <div className="flex items-center space-x-2 text-sm text-aws-gray-700">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-aws-orange"></div>
+        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(15,23,42,0.1)] border border-slate-200/80 p-4 z-50">
+          <h3 className="font-bold text-slate-800 text-sm mb-3">Saving Geofence...</h3>
+          <div className="flex items-center space-x-2 text-xs font-semibold text-slate-600">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-650"></div>
             <p>Saving to AWS Location Service...</p>
           </div>
         </div>
@@ -456,23 +456,23 @@ const GeofencesLayer = ({
 
       {/* ── Circle drawing UI — step: CENTER ── */}
       {circleStep === CIRCLE_STEPS.CENTER && (
-        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white rounded-lg shadow-aws-lg border border-aws-gray-200 p-4 z-50">
+        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(15,23,42,0.1)] border border-slate-200/80 p-4 z-50">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-2">
-              <CircleDot className="w-5 h-5 text-aws-orange" />
-              <h3 className="font-semibold text-aws-gray-900">Draw Circle Geofence</h3>
+              <CircleDot className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-bold text-slate-800 text-sm">Draw Circle Geofence</h3>
             </div>
-            <button onClick={exitCircleMode} className="text-aws-gray-500 hover:text-aws-gray-700">
+            <button onClick={exitCircleMode} className="text-slate-400 hover:text-slate-600">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="text-sm text-aws-gray-700 space-y-2">
-            <p className="font-medium text-aws-orange animate-pulse">Click on the map to set the center point</p>
-            <p className="text-xs text-aws-gray-600">
+          <div className="text-xs text-slate-600 space-y-2 font-medium">
+            <p className="font-semibold text-indigo-650 animate-pulse">Click on the map to set the center point</p>
+            <p className="text-[11px] text-slate-400">
               The cursor will change to a crosshair. Click anywhere on the map to place the center of the circle.
             </p>
           </div>
-          <button onClick={exitCircleMode} className="mt-4 w-full btn-secondary text-sm">
+          <button onClick={exitCircleMode} className="mt-4 w-full btn-secondary text-xs font-bold py-2 rounded-xl">
             Cancel
           </button>
         </div>
@@ -480,26 +480,26 @@ const GeofencesLayer = ({
 
       {/* ── Circle drawing UI — step: RADIUS ── */}
       {circleStep === CIRCLE_STEPS.RADIUS && (
-        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white rounded-lg shadow-aws-lg border border-aws-gray-200 p-4 z-50">
+        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(15,23,42,0.1)] border border-slate-200/80 p-4 z-50">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-2">
-              <CircleDot className="w-5 h-5 text-aws-orange" />
-              <h3 className="font-semibold text-aws-gray-900">Adjust Radius</h3>
+              <CircleDot className="w-5 h-5 text-indigo-600" />
+              <h3 className="font-bold text-slate-800 text-sm">Adjust Radius</h3>
             </div>
-            <button onClick={exitCircleMode} className="text-aws-gray-500 hover:text-aws-gray-700">
+            <button onClick={exitCircleMode} className="text-slate-400 hover:text-slate-600">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Center coords */}
-          <div className="bg-aws-gray-50 rounded-lg p-2 mb-4 text-xs text-aws-gray-600 font-mono">
+          <div className="bg-slate-50 rounded-xl p-2.5 mb-4 text-[10px] text-slate-500 font-mono font-semibold">
             Center: {circleCenter?.[1].toFixed(5)}, {circleCenter?.[0].toFixed(5)}
           </div>
 
           {/* Radius label */}
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-aws-gray-700">Radius</span>
-            <span className="text-sm font-bold text-aws-orange">{formatRadius(circleRadiusM)}</span>
+            <span className="text-xs font-bold text-slate-600">Radius</span>
+            <span className="text-xs font-extrabold text-indigo-650">{formatRadius(circleRadiusM)}</span>
           </div>
 
           {/* Slider */}
@@ -510,18 +510,18 @@ const GeofencesLayer = ({
             step={100}
             value={circleRadiusM}
             onChange={(e) => setCircleRadiusM(Number(e.target.value))}
-            className="w-full h-2 bg-aws-gray-200 rounded-lg appearance-none cursor-pointer accent-aws-orange mb-3"
+            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600 mb-3"
           />
 
           {/* Preset buttons */}
-          <div className="flex gap-2 mb-4 flex-wrap">
+          <div className="flex gap-1.5 mb-4 flex-wrap">
             {[250, 500, 1000, 2000, 5000].map((m) => (
               <button
                 key={m}
                 onClick={() => setCircleRadiusM(m)}
-                className={`text-xs px-2 py-1 rounded-full border transition-colors ${circleRadiusM === m
-                  ? "bg-aws-orange text-white border-aws-orange"
-                  : "bg-white text-aws-gray-600 border-aws-gray-300 hover:border-aws-orange hover:text-aws-orange"
+                className={`text-[10px] px-2.5 py-1 rounded-full border transition-colors font-bold ${circleRadiusM === m
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-indigo-600 hover:text-indigo-600"
                   }`}
               >
                 {formatRadius(m)}
@@ -538,17 +538,17 @@ const GeofencesLayer = ({
               step={100}
               value={circleRadiusM}
               onChange={(e) => setCircleRadiusM(Math.max(100, Math.min(50000, Number(e.target.value))))}
-              className="flex-1 px-3 py-1.5 border border-aws-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-aws-orange"
+              className="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold"
             />
-            <span className="text-sm text-aws-gray-600">metres</span>
+            <span className="text-xs text-slate-500 font-semibold">metres</span>
           </div>
 
           <div className="space-y-2">
-            <button onClick={handleSaveCircleGeofence} className="w-full btn-primary flex items-center justify-center space-x-2">
+            <button onClick={handleSaveCircleGeofence} className="w-full btn-primary flex items-center justify-center space-x-2 py-2 rounded-xl text-xs font-bold">
               <CircleDot className="w-4 h-4" />
               <span>Save Circle Geofence</span>
             </button>
-            <button onClick={exitCircleMode} className="w-full btn-secondary text-sm">
+            <button onClick={exitCircleMode} className="w-full btn-secondary text-xs font-bold py-2 rounded-xl">
               Discard
             </button>
           </div>
@@ -557,10 +557,10 @@ const GeofencesLayer = ({
 
       {/* ── Circle saving spinner ── */}
       {circleStep === CIRCLE_STEPS.SAVING && (
-        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white rounded-lg shadow-aws-lg border border-aws-gray-200 p-4 z-50">
-          <h3 className="font-semibold text-aws-gray-900 mb-3">Saving Circle Geofence...</h3>
-          <div className="flex items-center space-x-2 text-sm text-aws-gray-700">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-aws-orange"></div>
+        <div className="absolute top-16 left-4 right-4 sm:top-4 sm:right-4 sm:left-auto sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(15,23,42,0.1)] border border-slate-200/80 p-4 z-50">
+          <h3 className="font-bold text-slate-800 text-sm mb-3">Saving Circle Geofence...</h3>
+          <div className="flex items-center space-x-2 text-xs font-semibold text-slate-655">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-650"></div>
             <p>Saving to AWS Location Service...</p>
           </div>
         </div>

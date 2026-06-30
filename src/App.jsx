@@ -10,6 +10,8 @@ import DeviceHistoryPathLayer from './components/map/DeviceHistoryPathLayer';
 import GeofencesLayer from './components/geofences/GeofencesLayer';
 import GeofenceManagement from './components/geofences/GeofenceManagement';
 import AuthLayout from './components/auth/AuthLayout';
+import DeviceDetailPanel from './components/map/DeviceDetailPanel';
+import DashboardView from './components/dashboard/DashboardView';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { getCurrentUser, signOut } from 'aws-amplify/auth';
 import { getAuthHelpers, createLocationClient } from './utils/aws';
@@ -21,7 +23,7 @@ import Toast from './components/common/Toast';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
-  const [activeView, setActiveView] = useState('map');
+  const [activeView, setActiveView] = useState('dashboard');
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -176,11 +178,11 @@ function App() {
   // Poll devices from the backend while on the map view
   useDevicePolling(fetchDevices, activeView === 'map');
 
-  const handleDeviceSelect = (device, zoomToDevice = false) => {
+  const handleDeviceSelect = (device, zoomToDevice = true) => {
     setSelectedDevice(device);
     if (zoomToDevice && device?.position) {
       setActiveView('map');
-      setMapFocusPending({ center: [device.position[0], device.position[1]], zoom: 20 });
+      setMapFocusPending({ center: [device.position[0], device.position[1]], zoom: 16 });
     }
   };
 
@@ -288,40 +290,50 @@ function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-aws-gray-50 overflow-hidden">
-      <Header
-        onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-        title="VSmart Tracking"
-        onLogout={async () => {
-          try {
-            await signOut();
-            setIsAuthenticated(false);
-          } catch (err) {
-            console.error("Logout error", err);
-          }
-        }}
+    <div className="h-screen w-screen flex bg-slate-50 overflow-hidden text-slate-800">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeView={activeView}
+        onViewChange={setActiveView}
+        onToggleCollapse={() => setSidebarOpen(!sidebarOpen)}
       />
 
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-20 right-4 z-50">
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        </div>
-      )}
-
-      <div className="flex-1 flex overflow-hidden min-h-0">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          activeView={activeView}
-          onViewChange={setActiveView}
+      <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+        <Header
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
+          title="VSmart Tracking"
+          onLogout={async () => {
+            try {
+              await signOut();
+              setIsAuthenticated(false);
+            } catch (err) {
+              console.error("Logout error", err);
+            }
+          }}
         />
 
-        <main className="flex-1 overflow-hidden min-h-0">
+        {/* Toast Notification */}
+        {toast && (
+          <div className="fixed top-20 right-4 z-50">
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => setToast(null)}
+            />
+          </div>
+        )}
+
+        <main className="flex-1 overflow-hidden min-h-0 relative">
+          {activeView === 'dashboard' && (
+            <DashboardView
+              devices={devices}
+              onViewChange={setActiveView}
+              onDeviceSelect={handleDeviceSelect}
+              onAddDevice={() => setActiveView('devices')}
+            />
+          )}
+
           {activeView === 'map' && (
             <div className="h-full w-full relative">
               {/* Map Container */}
@@ -374,6 +386,14 @@ function App() {
                   }}
                 />
               </Map>
+
+              {/* Floating selected device detail sidebar */}
+              {selectedDevice && (
+                <DeviceDetailPanel
+                  device={selectedDevice}
+                  onClose={() => setSelectedDevice(null)}
+                />
+              )}
             </div>
           )}
 

@@ -118,8 +118,8 @@ const GeofenceManagement = ({ readOnlyLocationClient, writeOnlyLocationClient })
               <p className="text-sm text-gray-600">Total Geofences</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{stats.total}</p>
             </div>
-            <div className="w-12 h-12 bg-aws-orange bg-opacity-10 rounded-lg flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-aws-orange" />
+            <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center">
+              <MapPin className="w-6 h-6 text-indigo-600" />
             </div>
           </div>
         </div>
@@ -191,7 +191,7 @@ const GeofenceManagement = ({ readOnlyLocationClient, writeOnlyLocationClient })
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-aws-orange"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
           </div>
         ) : geofences.length === 0 ? (
           <div className="text-center py-12">
@@ -217,7 +217,7 @@ const GeofenceManagement = ({ readOnlyLocationClient, writeOnlyLocationClient })
                       type="checkbox"
                       checked={selectedGeofences.length === geofences.length}
                       onChange={handleSelectAll}
-                      className="w-4 h-4 text-aws-orange border-gray-300 rounded focus:ring-aws-orange"
+                      className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                     />
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
@@ -241,37 +241,37 @@ const GeofenceManagement = ({ readOnlyLocationClient, writeOnlyLocationClient })
                 {geofences.map((geofence) => (
                   <tr
                     key={geofence.GeofenceId}
-                    className="border-b border-gray-100 hover:bg-gray-50"
+                    className="border-b border-slate-100 hover:bg-slate-50/50"
                   >
                     <td className="py-3 px-4">
                       <input
                         type="checkbox"
                         checked={selectedGeofences.includes(geofence.GeofenceId)}
                         onChange={() => handleSelectGeofence(geofence.GeofenceId)}
-                        className="w-4 h-4 text-aws-orange border-gray-300 rounded focus:ring-aws-orange"
+                        className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                       />
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-aws-orange" />
-                        <span className="font-medium text-gray-900">
+                        <MapPin className="w-4 h-4 text-indigo-600" />
+                        <span className="font-semibold text-slate-800">
                           {geofence.GeofenceId}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">
+                    <td className="py-3 px-4 text-sm text-slate-600">
                       {formatCoordinates(geofence.Geometry?.Polygon)}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">
+                    <td className="py-3 px-4 text-sm text-slate-650">
                       {calculateArea(geofence.Geometry?.Polygon).toFixed(6)} km²
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600">
+                    <td className="py-3 px-4 text-sm text-slate-500">
                       {new Date(geofence.CreateTime).toLocaleString('en-US')}
                     </td>
                     <td className="py-3 px-4">
                       <button
                         onClick={() => setViewGeofence(geofence)}
-                        className="text-aws-orange hover:text-aws-orange-dark"
+                        className="text-indigo-600 hover:text-indigo-800"
                         title="View details"
                       >
                         <Eye className="w-5 h-5" />
@@ -426,8 +426,8 @@ const AddGeofenceModal = ({ writeOnlyLocationClient, onClose, onSuccess }) => {
                 type="button"
                 onClick={() => setInputMethod('manual')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${inputMethod === 'manual'
-                    ? 'bg-aws-orange text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
               >
                 Manual Input
@@ -436,8 +436,8 @@ const AddGeofenceModal = ({ writeOnlyLocationClient, onClose, onSuccess }) => {
                 type="button"
                 onClick={() => setInputMethod('template')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${inputMethod === 'template'
-                    ? 'bg-aws-orange text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
               >
                 Use Template

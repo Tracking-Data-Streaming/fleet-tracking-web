@@ -8,7 +8,7 @@ export default {
     extend: {
       colors: {
         aws: {
-          orange: '#FF9900',
+          orange: '#4F46E5',
           'dark-blue': '#232F3E',
           'light-blue': '#146EB4',
           'squid-ink': '#16191F',

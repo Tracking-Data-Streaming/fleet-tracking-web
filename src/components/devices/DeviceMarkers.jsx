@@ -1,4 +1,4 @@
-import { Marker, Popup } from 'react-map-gl/maplibre';
+import { Marker } from 'react-map-gl/maplibre';
 import { Navigation2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -71,7 +71,7 @@ const SmoothMarker = ({ device, deviceId, targetPos, statusColor, onClick }) => 
         >
           <Navigation2 className="w-5 h-5 text-white" />
         </div>
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-white rounded shadow-md text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 px-2 py-1 bg-white rounded shadow-md text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-10 text-slate-700">
           {deviceId}
         </div>
       </div>
@@ -80,24 +80,20 @@ const SmoothMarker = ({ device, deviceId, targetPos, statusColor, onClick }) => 
 };
 
 const DeviceMarkers = ({ devices = [], onDeviceClick }) => {
-  const [popupInfo, setPopupInfo] = useState(null);
-
   const getDeviceId = (device) => device.DeviceId || device.deviceId;
   const getPosition = (device) => device.Position || device.position;
   const getSampleTime = (device) => device.SampleTime || device.sampleTime;
-  const getAccuracy = (device) => device.Accuracy || device.accuracy;
-  const getProperties = (device) => device.PositionProperties || device.properties;
 
   const getStatusColor = (device) => {
     const sampleTime = getSampleTime(device);
-    if (!sampleTime) return '#9CA3AF';
+    if (!sampleTime) return '#94A3B8'; // Slate 400
     const lastUpdate = new Date(sampleTime);
     const now = new Date();
     const diffMinutes = (now - lastUpdate) / 1000 / 60;
 
-    if (diffMinutes < 5) return '#10B981'; // green
-    if (diffMinutes < 30) return '#F59E0B'; // yellow
-    return '#EF4444'; // red
+    if (diffMinutes < 5) return '#10B981'; // Green (Active)
+    if (diffMinutes < 30) return '#F59E0B'; // Yellow (Warning)
+    return '#EF4444'; // Red (Offline)
   };
 
   return (
@@ -118,75 +114,18 @@ const DeviceMarkers = ({ devices = [], onDeviceClick }) => {
             targetPos={position}
             statusColor={statusColor}
             onClick={(e) => {
-              e.originalEvent.stopPropagation();
-              setPopupInfo(device);
-              if (onDeviceClick) onDeviceClick(device);
+              if (e && e.stopPropagation) {
+                e.stopPropagation();
+              } else if (e && e.originalEvent && e.originalEvent.stopPropagation) {
+                e.originalEvent.stopPropagation();
+              }
+              if (onDeviceClick) {
+                onDeviceClick(device, true); // Select and zoom to device in left details sidebar
+              }
             }}
           />
         );
       })}
-
-      {popupInfo && (
-        <Popup
-          longitude={getPosition(popupInfo)[0]}
-          latitude={getPosition(popupInfo)[1]}
-          anchor="top"
-          onClose={() => setPopupInfo(null)}
-          closeButton={true}
-          closeOnClick={false}
-          className="device-popup"
-        >
-          <div className="p-2 min-w-[200px]">
-            <h3 className="font-semibold text-aws-gray-900 mb-2 flex items-center">
-              <Navigation2 className="w-4 h-4 mr-2 text-aws-orange" />
-              {getDeviceId(popupInfo)}
-            </h3>
-
-            <div className="space-y-1 text-sm text-aws-gray-700">
-              <div className="flex justify-between">
-                <span className="text-aws-gray-600">Latitude:</span>
-                <span className="font-medium">{getPosition(popupInfo)[1].toFixed(6)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-aws-gray-600">Longitude:</span>
-                <span className="font-medium">{getPosition(popupInfo)[0].toFixed(6)}</span>
-              </div>
-
-              {getAccuracy(popupInfo) && (
-                <div className="flex justify-between">
-                  <span className="text-aws-gray-600">Accuracy:</span>
-                  <span className="font-medium">{getAccuracy(popupInfo).Horizontal}m</span>
-                </div>
-              )}
-
-              {getSampleTime(popupInfo) && (
-                <div className="flex justify-between">
-                  <span className="text-aws-gray-600">Last Update:</span>
-                  <span className="font-medium">
-                    {new Date(getSampleTime(popupInfo)).toLocaleTimeString()}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {getProperties(popupInfo) && (
-              <div className="mt-3 pt-2 border-t border-aws-gray-200">
-                <div className="text-xs font-medium text-aws-gray-600 mb-1">Properties:</div>
-                <div className="flex flex-wrap gap-1">
-                  {Object.entries(getProperties(popupInfo)).map(([key, value]) => (
-                    <span
-                      key={key}
-                      className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-aws-gray-100 text-aws-gray-700"
-                    >
-                      {key}: {value}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </Popup>
-      )}
     </>
   );
 };
