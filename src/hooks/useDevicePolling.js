@@ -1,19 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 const POLL_INTERVAL = 10000; // 10 seconds
 
 export const useDevicePolling = (fetchDevicePositions, isActive = false) => {
+  const fetchRef = useRef(fetchDevicePositions);
+
   useEffect(() => {
-    if (!isActive || !fetchDevicePositions) return;
+    fetchRef.current = fetchDevicePositions;
+  }, [fetchDevicePositions]);
+
+  useEffect(() => {
+    if (!isActive) return;
 
     // Initial fetch
-    fetchDevicePositions();
+    fetchRef.current?.();
 
     // Start polling
     const interval = setInterval(() => {
-      fetchDevicePositions();
+      fetchRef.current?.();
     }, POLL_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [isActive]); // Only depend on isActive, not fetchDevicePositions
+  }, [isActive]);
 };
